@@ -4,10 +4,13 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 import com.example.meVirando.etanois.entities.User;
 import com.example.meVirando.etanois.repositories.UserRepository;
+import com.example.meVirando.etanois.services.exceptions.DatabaseException;
 import com.example.meVirando.etanois.services.exceptions.ResourceNotFoundException;
 
 @Service
@@ -30,11 +33,17 @@ public class UserService {
 	}
 
 	public void delete(long id) {
-		repository.deleteById(id);
+		try {
+			repository.deleteById(id);
+		} catch (EmptyResultDataAccessException e) {
+			throw new ResourceNotFoundException(id);
+		} catch (DataIntegrityViolationException e) {
+			throw new DatabaseException(e.getMessage());
+		}
 	}
 
 	public User update(Long id, User obj) {
-		User entity = repository.getOne (id);
+		User entity = repository.getOne(id);
 		updateData(entity, obj);
 		return repository.save(entity);
 	}
@@ -43,6 +52,6 @@ public class UserService {
 		entity.setName(obj.getName());
 		entity.setEmail(obj.getEmail());
 		entity.setPhone(obj.getPhone());
-		
+
 	}
 }
